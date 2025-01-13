@@ -14,6 +14,9 @@ public class GameManager : NetworkBehaviour
         public PlayerType playerType;
     }
 
+    public event EventHandler OnGameStarted;
+    public event EventHandler OnCurrentPlayablePlayerTypeChanged;
+
     public enum PlayerType
     {
         None,
@@ -50,15 +53,26 @@ public class GameManager : NetworkBehaviour
             localPlayerType = PlayerType.Circle;
         }
 
-        if (IsServer)
-        {  // Cross always plays first
-            currentPlayablePlayerType = PlayerType.Cross;
+        if (IsServer) // Connection event sub
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_OnClientConnectedCallback;
         }
     }
 
-    public PlayerType GetLocalPlayerType()
+    private void NetworkManager_OnClientConnectedCallback(ulong obj)
     {
-        return localPlayerType;
+        if (NetworkManager.Singleton.ConnectedClientsList.Count == 2)
+        {
+            //Start Game
+            currentPlayablePlayerType = PlayerType.Cross;
+            TriggerOnGameStartRpc();
+        }
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnGameStartRpc()
+    {
+        OnGameStarted?.Invoke(this, EventArgs.Empty);
     }
 
     [Rpc(SendTo.Server)]
@@ -88,5 +102,23 @@ public class GameManager : NetworkBehaviour
                 currentPlayablePlayerType = PlayerType.Cross;
                 break;
         }
+
+        TriggerOnCurrentPlayablePlayerTypeChangedRpc();
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    public void TriggerOnCurrentPlayablePlayerTypeChangedRpc()
+    {
+        OnCurrentPlayablePlayerTypeChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public PlayerType GetLocalPlayerType()
+    {
+        return localPlayerType;
+    }
+
+    public PlayerType GetCurrentPlayablePlayerType()
+    {
+        return currentPlayablePlayerType;
     }
 }
