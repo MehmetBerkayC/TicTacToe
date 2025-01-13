@@ -13,6 +13,6 @@ public class GridPosition : MonoBehaviour, IPointerDownHandler
     // Use OnMouseDown but it might react to UI too depending on what you do with it
     public void OnPointerDown(PointerEventData eventData)
     {
-        GameManager.Instance.ClickedOnGridPosition(x, y);
+        GameManager.Instance.ClickedOnGridPositionRpc(x, y);
     }
 }

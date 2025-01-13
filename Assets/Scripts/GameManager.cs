@@ -22,6 +22,7 @@ public class GameManager : NetworkBehaviour
     }
 
     private PlayerType localPlayerType;
+    private PlayerType currentPlayablePlayerType;
 
     private void Awake()
     {
@@ -48,6 +49,11 @@ public class GameManager : NetworkBehaviour
         {
             localPlayerType = PlayerType.Circle;
         }
+
+        if (IsServer)
+        {  // Cross always plays first
+            currentPlayablePlayerType = PlayerType.Cross;
+        }
     }
 
     public PlayerType GetLocalPlayerType()
@@ -55,14 +61,32 @@ public class GameManager : NetworkBehaviour
         return localPlayerType;
     }
 
-    public void ClickedOnGridPosition(int x, int y)
+    [Rpc(SendTo.Server)]
+    public void ClickedOnGridPositionRpc(int x, int y, PlayerType playerType)
     {
+        /// ALL OF THIS GAME IS SERVER AUTHORITATIVE
         Debug.Log("Clicked on grid position: " + x + "," + y);
+        // Check player turn
+        if (playerType != currentPlayablePlayerType) { return; }
+
+        // Play
         OnClickedOnGridPosition?.Invoke(this, new OnClickedOnGridPositionEventArgs
         {
             x = x,
             y = y,
             playerType = GetLocalPlayerType(),
         });
+
+        // End player turn
+        switch (currentPlayablePlayerType)
+        {
+            default:
+            case PlayerType.Cross:
+                currentPlayablePlayerType = PlayerType.Circle;
+                break;
+            case PlayerType.Circle:
+                currentPlayablePlayerType = PlayerType.Cross;
+                break;
+        }
     }
 }
