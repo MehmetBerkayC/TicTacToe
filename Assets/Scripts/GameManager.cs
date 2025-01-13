@@ -25,7 +25,7 @@ public class GameManager : NetworkBehaviour
     }
 
     private PlayerType localPlayerType;
-    private PlayerType currentPlayablePlayerType;
+    private NetworkVariable<PlayerType> currentPlayablePlayerType = new NetworkVariable<PlayerType>();
 
     private void Awake()
     {
@@ -43,7 +43,7 @@ public class GameManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         //Debug.Log(NetworkManager.Singleton.LocalClientId);
-
+        Debug.Log(NetworkManager.Singleton.LocalClientId + " " + IsServer);
         if (NetworkManager.Singleton.LocalClientId == 0)
         {
             localPlayerType = PlayerType.Cross;
@@ -52,11 +52,18 @@ public class GameManager : NetworkBehaviour
         {
             localPlayerType = PlayerType.Circle;
         }
+        Debug.Log(localPlayerType);
 
         if (IsServer) // Connection event sub
         {
             NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_OnClientConnectedCallback;
         }
+
+        // Both Server and Client will have it
+        currentPlayablePlayerType.OnValueChanged += (PlayerType oldPlayerType, PlayerType newPlayerType) =>
+        {
+            OnCurrentPlayablePlayerTypeChanged?.Invoke(this, EventArgs.Empty);
+        };
     }
 
     private void NetworkManager_OnClientConnectedCallback(ulong obj)
@@ -64,7 +71,7 @@ public class GameManager : NetworkBehaviour
         if (NetworkManager.Singleton.ConnectedClientsList.Count == 2)
         {
             //Start Game
-            currentPlayablePlayerType = PlayerType.Cross;
+            currentPlayablePlayerType.Value = PlayerType.Cross;
             TriggerOnGameStartRpc();
         }
     }
@@ -81,35 +88,27 @@ public class GameManager : NetworkBehaviour
         /// ALL OF THIS GAME IS SERVER AUTHORITATIVE
         Debug.Log("Clicked on grid position: " + x + "," + y);
         // Check player turn
-        if (playerType != currentPlayablePlayerType) { return; }
+        if (playerType != currentPlayablePlayerType.Value) { return; }
 
         // Play
         OnClickedOnGridPosition?.Invoke(this, new OnClickedOnGridPositionEventArgs
         {
             x = x,
             y = y,
-            playerType = GetLocalPlayerType(),
+            playerType = playerType,
         });
 
         // End player turn
-        switch (currentPlayablePlayerType)
+        switch (currentPlayablePlayerType.Value)
         {
             default:
             case PlayerType.Cross:
-                currentPlayablePlayerType = PlayerType.Circle;
+                currentPlayablePlayerType.Value = PlayerType.Circle;
                 break;
             case PlayerType.Circle:
-                currentPlayablePlayerType = PlayerType.Cross;
+                currentPlayablePlayerType.Value = PlayerType.Cross;
                 break;
         }
-
-        TriggerOnCurrentPlayablePlayerTypeChangedRpc();
-    }
-
-    [Rpc(SendTo.ClientsAndHost)]
-    public void TriggerOnCurrentPlayablePlayerTypeChangedRpc()
-    {
-        OnCurrentPlayablePlayerTypeChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public PlayerType GetLocalPlayerType()
@@ -119,6 +118,6 @@ public class GameManager : NetworkBehaviour
 
     public PlayerType GetCurrentPlayablePlayerType()
     {
-        return currentPlayablePlayerType;
+        return currentPlayablePlayerType.Value;
     }
 }

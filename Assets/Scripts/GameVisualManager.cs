@@ -15,14 +15,15 @@ public class GameVisualManager : NetworkBehaviour
 
     private void GameManager_OnClickedOnGridPosition(object sender, GameManager.OnClickedOnGridPositionEventArgs e)
     {
-        Debug.Log("RPC EVENT");
+        Debug.Log("OnClickedGrid");
         SpawnObjectRpc(e.x, e.y, e.playerType);
     }
 
+    // Rpc params can only be value types, not reference(obj, transform, networkObj...)
     [Rpc(SendTo.Server)]
-    private void SpawnObjectRpc(int x, int y, GameManager.PlayerType playerType) // Rpc params can only be value types, not reference(obj, transform, networkObj...)
+    private void SpawnObjectRpc(int x, int y, GameManager.PlayerType playerType)
     {
-        Debug.Log("SpawnObject");
+        Debug.Log("SpawnObject:" + playerType.ToString());
 
         Transform prefab;
         switch (playerType)
