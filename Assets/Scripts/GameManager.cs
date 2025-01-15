@@ -61,6 +61,7 @@ public class GameManager : NetworkBehaviour
     private NetworkVariable<int> _playerCrossScore = new NetworkVariable<int>();
     private NetworkVariable<int> _playerCircleScore = new NetworkVariable<int>();
 
+
     private void Awake()
     {
         if (Instance == null)

@@ -20,6 +20,7 @@ public class PlayerUI : MonoBehaviour
         circleArrowGameObject.SetActive(false);
         circleYouTextGameObject.SetActive(false);
         circleScoreTextGameObject.text = "";
+
     }
 
     private void Start()
@@ -27,6 +28,8 @@ public class PlayerUI : MonoBehaviour
         GameManager.Instance.OnGameStarted += GameManager_OnGameStarted;
         GameManager.Instance.OnCurrentPlayablePlayerTypeChanged += GameManager_OnCurrentPlayablePlayerTypeChanged;
         GameManager.Instance.OnScoreChanged += GameManager_OnScoreChanged;
+
+        Hide();
     }
 
     private void GameManager_OnScoreChanged(object sender, System.EventArgs e)
@@ -46,6 +49,7 @@ public class PlayerUI : MonoBehaviour
     // First time start - not rematches
     private void GameManager_OnGameStarted(object sender, System.EventArgs e)
     {
+
         if (GameManager.Instance.GetLocalPlayerType() == GameManager.PlayerType.Cross)
         {
             crossYouTextGameObject.SetActive(true);
@@ -57,6 +61,9 @@ public class PlayerUI : MonoBehaviour
 
         crossScoreTextGameObject.text = "0";
         circleScoreTextGameObject.text = "0";
+
+        Debug.Log("Displaying PlayerUI");
+        Show();
 
         UpdateCurrentArrow();
     }
@@ -73,5 +80,15 @@ public class PlayerUI : MonoBehaviour
             crossArrowGameObject.SetActive(false);
             circleArrowGameObject.SetActive(true);
         }
+    }
+
+    private void Show()
+    {
+        gameObject.SetActive(true);
+    }
+
+    private void Hide()
+    {
+        gameObject.SetActive(false);
     }
 }
